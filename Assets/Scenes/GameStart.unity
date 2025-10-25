@@ -1362,7 +1362,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainMenuCanvas: {fileID: 1456511158}
   rulesCanvas: {fileID: 1058185200}
-  gameplaySceneName: SampleScene
+  gameplaySceneName: GameSceneC
 --- !u!4 &1233851640
 Transform:
   m_ObjectHideFlags: 0
@@ -2061,6 +2061,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1782560640}
   - component: {fileID: 1782560639}
+  - component: {fileID: 1782560641}
   m_Layer: 0
   m_Name: GameSession
   m_TagString: Untagged
@@ -2081,9 +2082,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuSceneName: GameStart
-  levelOneSceneName: SampleScene
+  levelOneSceneName: GameSceneC
   resultSceneName: GameEnd
-  Score: 30
+  maxHP: 100
+  currentHP: 100
+  score: 0
 --- !u!4 &1782560640
 Transform:
   m_ObjectHideFlags: 0
@@ -2099,3 +2102,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1782560641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1782560638}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c11d214a471f60f45915a48d91f130a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  menuBGM: {fileID: 8300000, guid: 530cd33581215be4498db55f2c8a75b3, type: 3}
+  levelBGM: {fileID: 8300000, guid: 9669960e415ea604d81fb0784634df79, type: 3}
+  resultBGM: {fileID: 8300000, guid: c04f0f2b02e32304f969c07c5750dbea, type: 3}

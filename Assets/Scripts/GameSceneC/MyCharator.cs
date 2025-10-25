@@ -345,6 +345,17 @@ namespace EnemyC
             GameObject other = collision.gameObject;
             Debug.Log($"[OnCollisionEnter] Hit object name = {other.name}");
 
+            if (other.CompareTag(playerTag))
+            {
+                var php = other.GetComponent<PlayerHP>();
+                if (php != null)
+                {
+                    php.TakeDamage(10);
+                    if (debugLogs) Debug.Log($"[TouchDamage] -10");
+                }
+                return;
+            }
+
             if (!IsBulletByName(other.name))
                 return;
 

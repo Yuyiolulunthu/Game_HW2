@@ -11,7 +11,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] Canvas rulesCanvas;      
 
     [Header("Gameplay Scene")]
-    [SerializeField] string gameplaySceneName = "SampleScene"; 
+    [SerializeField] string gameplaySceneName = "GameSceneC"; 
 
     void Awake()
     {
