@@ -17,6 +17,11 @@ public class PlayerMove : MonoBehaviour
     public float cooldown = 0.25f;    // 射速間隔
     public bool useAnimationEvent = false; // 勾選則由動畫事件呼叫 AnimFire()
 
+    [Header("Audio")]
+    public AudioClip shootSFX;
+    [Range(0f,1f)] public float shootVolume = 1f;
+    private AudioSource audioSource;
+
     [Header("Animator (optional)")]
     public Animator animator;         // 可留空；若指定會驅動參數
     public string speedParam = "Speed";
@@ -39,6 +44,15 @@ public class PlayerMove : MonoBehaviour
 
         var f = transform.forward; f.y = 0;
         if (f.sqrMagnitude > 1e-6f) lastFacingDir = f.normalized;
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f; 
+            audioSource.loop = false;
+        }
     }
 
     void Update()
@@ -103,6 +117,7 @@ public class PlayerMove : MonoBehaviour
     // 立即產生子彈（可由動畫事件呼叫）
     public void FireNow()
     {
+        if (shootSFX != null && audioSource != null) audioSource.PlayOneShot(shootSFX, shootVolume);
         if (!bulletPrefab) { Debug.LogWarning("bulletPrefab 未指定！"); return; }
 
         // 射擊方向

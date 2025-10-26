@@ -19,6 +19,17 @@ public class GameSession : MonoBehaviour
     [SerializeField] private int currentHP = 100;
     [SerializeField] private int score = 0;
 
+    [Header("SFX")]
+    [SerializeField] private AudioClip deathSFX;
+    [SerializeField, Range(0f,1f)] private float deathSFXVolume = 1f;
+    [SerializeField] private AudioClip winSFX;
+    [SerializeField, Range(0f,1f)] private float winSFXVolume = 1f;
+
+    private AudioSource sfxSource;
+    private bool hasDiedSFXPlayed = false; 
+    private bool hasWinSFXPlayed = false;
+
+
     public int MaxHP => maxHP;
     public int CurrentHP => currentHP;
     public int Score => score;
@@ -29,24 +40,30 @@ public class GameSession : MonoBehaviour
     bool eventSubscribed = false; 
 
     void Awake()
-{
-    Debug.Log($"[GameSession] Awake - existing instance? {(I != null)}  scene={SceneManager.GetActiveScene().name}");
-
-    if (I != null && I != this)
     {
-        Destroy(gameObject);
-        return;
-    }
+        Debug.Log($"[GameSession] Awake - existing instance? {(I != null)}  scene={SceneManager.GetActiveScene().name}");
 
-    I = this;
-    DontDestroyOnLoad(gameObject);
+        if (I != null && I != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-    if (!eventSubscribed)
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        eventSubscribed = true;
+        I = this;
+        DontDestroyOnLoad(gameObject);
+
+        sfxSource = gameObject.AddComponent<AudioSource>();
+        sfxSource.playOnAwake = false;
+        sfxSource.loop = false;
+        sfxSource.spatialBlend = 0f;
+
+
+        if (!eventSubscribed)
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            eventSubscribed = true;
+        }
     }
-}
 
 
     void OnDestroy()
@@ -73,7 +90,27 @@ public class GameSession : MonoBehaviour
             scoreText.text = $"<size=64><b>Score\n{Score}</b></size>";
     }
 
-    // ---- 封裝操作：統一由這裡變更狀態 ----
+    void PlayDeathSFXOnce()
+    {
+        if (hasDiedSFXPlayed) return;
+        hasDiedSFXPlayed = true;
+
+        if (deathSFX != null && sfxSource != null)
+            sfxSource.PlayOneShot(deathSFX, deathSFXVolume);
+    }
+
+    public void PlayWinSFXOnce()
+    {
+        if (hasWinSFXPlayed) return;
+        hasWinSFXPlayed = true;
+
+        if (winSFX != null && sfxSource != null)
+            sfxSource.PlayOneShot(winSFX, winSFXVolume);
+    }
+
+
+
+    // 從這裡改全局狀態
     public void AddScore(int amount)
     {
         score = Mathf.Max(0, score + amount);
@@ -94,7 +131,9 @@ public class GameSession : MonoBehaviour
 
         if (currentHP <= 0)
         {
-            HandlePlayerDeath();
+            PlayDeathSFXOnce();
+            SafeClearSelection();
+            SceneManager.LoadScene(resultSceneName);
         }
     }
 
@@ -107,25 +146,20 @@ public class GameSession : MonoBehaviour
 
     IEnumerator RestartLevelCoroutine()
     {
-        // 如果想留一點死亡動畫時間可調整這裡
         yield return new WaitForSeconds(0.6f);
 
-        // ? 回滿血（在重載前就先回滿，HUD 也能先更新一次）
+        // 回滿血
         currentHP = maxHP;
         OnPlayerHPChanged?.Invoke(currentHP, maxHP);
 
-        // ? 重新載入目前關卡（敵人血/道具都會回初始）
+        // 重新載入目前關卡（敵人血/道具都會回初始）
         string curr = SceneManager.GetActiveScene().name;
         SceneManager.LoadScene(curr);
 
-        // ? 解除鎖
         isRestarting = false;
-
-        // （可選）如果你希望「死亡就扣分或歸零」，在這裡調整：
-        // score = 0; OnScoreChanged?.Invoke(score);
     }
 
-    // ---- Scene flow control（沿用妳原本 API）----
+    // Scene flow control
     public void ResetRun()
     {
         score = 0;

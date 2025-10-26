@@ -18,11 +18,9 @@ public class PlayerHPBar : MonoBehaviour
 
         // 綁定 GameSession 血量事件
         GameSession.I.OnPlayerHPChanged += UpdateHP;
-
-        // 攝影機
         cam = Camera.main.transform;
 
-        // 初始化一次
+        // 初始化
         UpdateHP(GameSession.I.CurrentHP, GameSession.I.MaxHP);
     }
 
