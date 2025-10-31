@@ -35,7 +35,7 @@ namespace EnemyC
         static readonly int IdleState = Animator.StringToHash("Base Layer.Idle");
 
         [Header("Debug")]
-        public bool debugLogs = true;
+        public bool debugLogs = false;
 
         [Header("Hit VFX")]
         public GameObject enemyCBloodPrefab;     // 指到你的 EnemyCBlood Prefab
@@ -200,7 +200,7 @@ namespace EnemyC
         // --- 播放被攻擊音效 ---
         private void PlayHitSound()
         {
-            Debug.Log("iswhijwgowjoghwjnfoiwpint2");
+            //Debug.Log("iswhijwgowjoghwjnfoiwpint2");
             if (hitAudioClip != null && audioSourceHit != null)
             {
                 audioSourceHit.volume = hitAudioVolume;
@@ -250,8 +250,7 @@ namespace EnemyC
             rotateTimer -= Time.fixedDeltaTime;
             if (rotateTimer <= 0f)
             {
-               Debug.Log("turn by timer.");
-               Debug.Log("turn by timer.");
+         
                 float deltaYaw = UnityEngine.Random.Range(-120f, 120f);
                 targetFacing = Quaternion.Euler(0f, transform.eulerAngles.y + deltaYaw, 0f);
                 rotateTimer = UnityEngine.Random.Range(rotateIntervalRange.x, rotateIntervalRange.y);
@@ -268,7 +267,7 @@ namespace EnemyC
         // --- 碰到邊緣時固定轉 180 度 ---
         private void BigTurnAway()
         {
-            Debug.Log("[EdgeGuard] Turned away from edge.");
+            //Debug.Log("[EdgeGuard] Turned away from edge.");
             float deltaYaw = 90f; 
             if (UnityEngine.Random.value < 0.5f)
                 deltaYaw = -deltaYaw;
@@ -346,7 +345,7 @@ namespace EnemyC
 
                 // 其餘都視為障礙 -> 不能前進
                 Debug.DrawLine(start, hit.point, Color.yellow, 0.2f);
-                Debug.Log($"[CanMoveForward] blocked by {go.name} (Tag:{go.tag}) at {hit.distance:F2}m");
+               //Debug.Log($"[CanMoveForward] blocked by {go.name} (Tag:{go.tag}) at {hit.distance:F2}m");
                 return false;
             }
 
@@ -385,7 +384,7 @@ namespace EnemyC
         private void OnCollisionEnter(Collision collision)
         {
             GameObject other = collision.gameObject;
-            Debug.Log($"[OnCollisionEnter] Hit object name = {other.name}");
+            //Debug.Log($"[OnCollisionEnter] Hit object name = {other.name}");
 
             if (other.CompareTag(playerTag))
             {
@@ -401,7 +400,7 @@ namespace EnemyC
             if (!IsBulletByName(other.name))
                 return;
 
-            Debug.Log("onCollisionEnter: bullet detected!");
+            //Debug.Log("onCollisionEnter: bullet detected!");
 
             Vector3 hitPoint = (collision.contactCount > 0)
                 ? collision.GetContact(0).point
