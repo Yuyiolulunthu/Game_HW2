@@ -35,7 +35,7 @@ namespace EnemyC
         static readonly int IdleState = Animator.StringToHash("Base Layer.Idle");
 
         [Header("Debug")]
-        public bool debugLogs = false;
+        public bool debugLogs = true;
 
         [Header("Hit VFX")]
         public GameObject enemyCBloodPrefab;     // 指到你的 EnemyCBlood Prefab
@@ -107,9 +107,9 @@ namespace EnemyC
             anim = GetComponent<Animator>();
             rb = GetComponent<Rigidbody>();
             col = GetComponent<CapsuleCollider>();
-            rb.useGravity = false;
+            rb.useGravity = true;
 
-            // 🔊 自動建立 AudioSource（如果物件上沒有的話）
+            //自動建立 AudioSource（如果物件上沒有的話）
             audioSource = GetComponent<AudioSource>();
             if (audioSource == null)
                 audioSource = gameObject.AddComponent<AudioSource>();
@@ -117,7 +117,7 @@ namespace EnemyC
             audioSource.spatialBlend = 1f; // 3D 音效
             audioSource.volume = attackAudioVolume;
 
-            // 🔊 受擊音效的 AudioSource（獨立一個，避免疊音被打斷）
+            //受擊音效的 AudioSource（獨立一個，避免疊音被打斷）
             audioSourceHit = gameObject.AddComponent<AudioSource>(); // 直接新增第二個
             audioSourceHit.playOnAwake = false;
             audioSourceHit.spatialBlend = 1f; // 3D
@@ -133,7 +133,9 @@ namespace EnemyC
         void Update()
         {
             anim.speed = animatorPlaybackSpeed;
-
+            Vector3 pos = transform.position;
+            pos.y = 0f;
+            transform.position = pos;
             if (playerT == null)
             {
                 var go = GameObject.FindGameObjectWithTag(playerTag);
@@ -164,14 +166,17 @@ namespace EnemyC
                 DoRandomTurn();
 
                 Vector3 desired = transform.forward * moveSpeed * Time.fixedDeltaTime;
-                if (WillStepStayOnGround(desired))
+                
+                if (CanMoveForward(desired))
                 {
                     forwardMove = desired;
+                    Debug.Log("TurnOrNot(desired)=true");
                 }
                 else
                 {
+                    Debug.Log("TurnOrNot(desired)=false");
                     BigTurnAway();
-                    if (debugLogs) Debug.Log("[EdgeGuard] Turned away from edge.");
+                     Debug.Log("[EdgeGuard] Turned away from edge.");
                 }
             }
 
@@ -184,11 +189,11 @@ namespace EnemyC
             anim.SetFloat("Speed", inAttack ? 0f : 1f);
             anim.SetFloat("Direction", 0f);
 
-            // 🔴 新增：攻擊時播放攻擊特效
+            // 新增：攻擊時播放攻擊特效
             if (inAttack)
                 TrySpawnAttackEffect();
 
-            // 🔴 新增：檢查子彈距離
+            // 新增：檢查子彈距離
             DetectBulletNear();
         }
 
@@ -227,13 +232,13 @@ namespace EnemyC
                     Vector3 hitPos = b.transform.position;
                     SpawnBloodAt(hitPos, Quaternion.identity);
 
-                    // 🎧 播放受擊音效
+                    //播放受擊音效
                     PlayHitSound();
 
                     if (destroyBulletAfterHit)
                         Destroy(b);
 
-                    break; // 避免多次觸發
+                    break; 
                 }
             }
         }
@@ -241,10 +246,12 @@ namespace EnemyC
         // --- 隨機轉向 ---
         private void DoRandomTurn()
         {
+            
             rotateTimer -= Time.fixedDeltaTime;
             if (rotateTimer <= 0f)
             {
-                if (debugLogs) Debug.Log("turn by timer.");
+               Debug.Log("turn by timer.");
+               Debug.Log("turn by timer.");
                 float deltaYaw = UnityEngine.Random.Range(-120f, 120f);
                 targetFacing = Quaternion.Euler(0f, transform.eulerAngles.y + deltaYaw, 0f);
                 rotateTimer = UnityEngine.Random.Range(rotateIntervalRange.x, rotateIntervalRange.y);
@@ -257,15 +264,19 @@ namespace EnemyC
             );
         }
 
-        // --- 碰到邊緣時大幅轉向 ---
+      
+        // --- 碰到邊緣時固定轉 180 度 ---
         private void BigTurnAway()
         {
-            float deltaYaw = UnityEngine.Random.Range(repickBigTurnMin, repickBigTurnMax);
-            if (UnityEngine.Random.value < 0.5f) deltaYaw = -deltaYaw;
+            Debug.Log("[EdgeGuard] Turned away from edge.");
+            float deltaYaw = 90f; 
+            if (UnityEngine.Random.value < 0.5f)
+                deltaYaw = -deltaYaw;
 
             targetFacing = Quaternion.Euler(0f, transform.eulerAngles.y + deltaYaw, 0f);
             rotateTimer = UnityEngine.Random.Range(rotateIntervalRange.x, rotateIntervalRange.y);
         }
+
 
         // --- 面向指定方向 ---
         private void FaceTowards(Vector3 worldPos, float degPerSec)
@@ -313,6 +324,37 @@ namespace EnemyC
             }
             return false;
         }
+
+        // 前方暢通 -> true；有障礙 -> false
+        private bool CanMoveForward(Vector3 delta)
+        {
+            Vector3 start = rb.position + Vector3.up * 1.0f;
+            float checkDist = Mathf.Max(delta.magnitude + 0.2f, 0.5f);
+
+            // 建議用 SphereCast，側擦牆也抓得到
+            float bodyRadius = 0.4f; // 依角色寬度調整
+            Debug.DrawRay(start, transform.forward * checkDist, Color.green, 0.1f);
+
+            if (Physics.SphereCast(start, bodyRadius, transform.forward, out RaycastHit hit, checkDist))
+            {
+                var go = hit.collider.gameObject;
+
+                // 排除不算障礙的對象
+                if (go == gameObject) return true;
+                if (go.CompareTag("Player")) return true;
+                if (go.CompareTag("Ground")) return true;  // 地面不算障礙
+
+                // 其餘都視為障礙 -> 不能前進
+                Debug.DrawLine(start, hit.point, Color.yellow, 0.2f);
+                Debug.Log($"[CanMoveForward] blocked by {go.name} (Tag:{go.tag}) at {hit.distance:F2}m");
+                return false;
+            }
+
+            // 沒打到任何東西 -> 可前進
+            return true;
+        }
+
+
 
         private float PlanarDistance(Vector3 a, Vector3 b)
         {
